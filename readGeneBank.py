@@ -1,12 +1,30 @@
-from Bio import GenBank
 from Bio import SeqIO
 import itertools
 
 class FeatureStruct():
-    def __init__(self, name, locasion, qualifiers):
-        self.name = name
-        self.location = locasion
-        self.qualifiers = qualifiers
+    def __init__(self, previousGene, controlRegion, nextGene):
+        self.previousGene = previousGene
+        self.controlRegion = controlRegion
+        self.nextGene = nextGene
+    
+    @staticmethod
+    def extractGeneInfoToOneLineStr(gene):
+        name = gene.type
+        location = gene.location
+        if "product" in gene.qualifiers:
+            product = gene.qualifiers["product"]
+        else:
+            product = None
+        return f"{name} {location} {product}"
+
+    @classmethod
+    def initFromSeqFeatureClass(cls, geneList):
+        geneList = map(cls.extractGeneInfoToOneLineStr, geneList)
+        geneList = list(geneList)
+        previousGene = geneList[0]
+        controlRegion = geneList[1]
+        nextGene = geneList[2]
+        return cls(previousGene, controlRegion, nextGene)
 
 class RowStruct():
     def __init__(self, previousFeature, controlRegion, nextFeature, accesionName, taxonomy, organism, ):
@@ -47,9 +65,11 @@ class GeneBankReader():
                 nextGene = features[0]
             else:
                 nextGene = features[controlRegionIndex + 1]
-            return self.extractGeneInfoToOneLineStr(previousGene), self.extractGeneInfoToOneLineStr(controlRegion), self.extractGeneInfoToOneLineStr(nextGene)
+            # return self.extractGeneInfoToOneLineStr(previousGene), self.extractGeneInfoToOneLineStr(controlRegion), self.extractGeneInfoToOneLineStr(nextGene)
+            return FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene])
         else:
-            return None, None, None
+            # return None, None, None
+            return None
 
     def extractGeneInfoToOneLineStr(self, gene):
         name = gene.type
@@ -64,11 +84,14 @@ class GeneBankReader():
         with open(self.geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
-                previousGene, controlRegion, nextGene = self.getFeatures(record.features)
-                if previousGene == None:
+                # previousGene, controlRegion, nextGene = self.getFeatures(record.features)
+                featureStruct = self.getFeatures(record.features)
+                # print(featureStruct.controlRegion)
+                if featureStruct == None:
                     continue
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
-                rowStruct = RowStruct(previousGene, controlRegion, nextGene, accessions, taxonomy, organism)
+                rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
+                # print(rowStruct)
                 self.saveRowToFile(rowStruct.__str__())
     
     def saveRowToFile(slef, row):
@@ -76,7 +99,6 @@ class GeneBankReader():
             saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
             saveFile.write(f"{row}\n")
                 
-
 if __name__ == "__main__":
     geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     geneBankReader.readGeneBankFile()
