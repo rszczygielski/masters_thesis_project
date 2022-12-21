@@ -81,6 +81,7 @@ class GeneBankReader():
         return f"{name} {location} {product}"
 
     def readGeneBankFile(self):
+        listOfRows = []
         with open(self.geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
@@ -92,13 +93,17 @@ class GeneBankReader():
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                 rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
                 # print(rowStruct)
-                self.saveRowToFile(rowStruct.__str__())
-    
-    def saveRowToFile(slef, row):
-        with open("Organisms_CR.txt", "a") as saveFile:
+                listOfRows.append(rowStruct.__str__())
+        return listOfRows
+
+    def saveRowToFile(self):
+        listOfRows = self.readGeneBankFile()
+        with open("Organisms_CR.txt", "w") as saveFile:
             saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
-            saveFile.write(f"{row}\n")
+            for row in listOfRows:
+                saveFile.write(f"{row}\n")
+                print(f"{row} added to file")
                 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    geneBankReader.readGeneBankFile()
+    geneBankReader.saveRowToFile()
