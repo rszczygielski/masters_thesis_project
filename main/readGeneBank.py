@@ -113,8 +113,8 @@ class GeneBankReader():
                 print(f"{row} added to file")
 
 if __name__ == "__main__":
-    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
+    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    geneBankReader.saveRowToFile("Organisms_mitochondion_1.txt")
     # geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     # geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
 
