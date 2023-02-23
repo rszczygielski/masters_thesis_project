@@ -6,7 +6,7 @@ class FeatureStruct():
         self.previousGene = previousGene
         self.controlRegion = controlRegion
         self.nextGene = nextGene
-    
+
     @staticmethod
     def extractGeneInfoToOneLineStr(gene):
         name = gene.type
@@ -19,26 +19,26 @@ class FeatureStruct():
 
     @classmethod
     def initFromSeqFeatureClass(cls, geneList):
-        geneList = map(cls.extractGeneInfoToOneLineStr, geneList)
-        geneList = list(geneList)
+        mapObject = map(cls.extractGeneInfoToOneLineStr, geneList)
+        geneList = list(mapObject)
         previousGene = geneList[0]
         controlRegion = geneList[1]
         nextGene = geneList[2]
         return cls(previousGene, controlRegion, nextGene)
 
 class RowStruct():
-    def __init__(self, previousFeature, controlRegion, nextFeature, accesionName, taxonomy, organism, ):
+    def __init__(self, previousFeature, controlRegion, nextFeature, accesionName, taxonomy, organism):
         self.previousFeature = previousFeature
         self.controlRegion = controlRegion
         self.nextFeature = nextFeature
-        self.accesionName = accesionName
+        self.accesionName = accesionName[0]
         self.controlRegion = controlRegion
         self.taxonomy = taxonomy
         self.organism = organism
 
     def __str__(self) -> str:
         return f"{self.accesionName}\t{self.organism}\t{self.taxonomy}\t\
-        {self.previousFeature}\t{self.controlRegion}\t{self.nextFeature}\t"
+        {self.previousFeature}\t{self.controlRegion}\t{self.nextFeature}"
 
 class GeneBankReader():
     def __init__(self, geneBankPath):
@@ -46,7 +46,7 @@ class GeneBankReader():
 
     def getAnnotations(self, annotations):
         return annotations["accessions"], annotations["organism"], annotations["taxonomy"]
-    
+
     def pairwise(self, iterable):
         "s -> (s0,s1), (s1,s2), (s2, s3), ..."
         a, b = itertools.tee(iterable)
@@ -54,22 +54,28 @@ class GeneBankReader():
         return zip(a, b)
 
     def getFeatures(self, features):
+        listOfFeatureStructs = []
         controlRegionIndex = None
         for previousGene, controlRegion in self.pairwise(features):
             for featureValue in controlRegion.qualifiers.values():
                 if "control region" in featureValue or "D-loop" in featureValue:
                     controlRegionIndex = features.index(controlRegion)
-                    break
+                    # break
         if controlRegionIndex:
             if len(features) - 1 == controlRegionIndex:
                 nextGene = features[0]
+                if features[0].type == "source":
+                    nextGene = features[1]
+                    if features[1].type == "gene":
+                        nextGene = features[2]
             else:
                 nextGene = features[controlRegionIndex + 1]
-            # return self.extractGeneInfoToOneLineStr(previousGene), self.extractGeneInfoToOneLineStr(controlRegion), self.extractGeneInfoToOneLineStr(nextGene)
-            return FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene])
-        else:
-            # return None, None, None
-            return None
+            # return FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene])
+            listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
+        return listOfFeatureStructs
+        # else:
+        #     # return None, None, None
+        #     return None
 
     def extractGeneInfoToOneLineStr(self, gene):
         name = gene.type
@@ -85,15 +91,15 @@ class GeneBankReader():
         with open(self.geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
-                # previousGene, controlRegion, nextGene = self.getFeatures(record.features)
-                featureStruct = self.getFeatures(record.features)
+                # featureStruct = self.getFeatures(record.features)
+                featureStructList = self.getFeatures(record.features)
                 # print(featureStruct.controlRegion)
-                if featureStruct == None:
-                    continue
+                # if featureStruct == None:
+                #     continue
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
-                rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
-                # print(rowStruct)
-                listOfRows.append(rowStruct.__str__())
+                for featureStruct in featureStructList:
+                    rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
+                    listOfRows.append(rowStruct.__str__())
         return listOfRows
 
     def saveRowToFile(self):
@@ -103,7 +109,20 @@ class GeneBankReader():
             for row in listOfRows:
                 saveFile.write(f"{row}\n")
                 print(f"{row} added to file")
-                
+
 if __name__ == "__main__":
     geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     geneBankReader.saveRowToFile()
+
+    # pominąć source
+    # brac wszystkie regiony kontrolne które są
+    # duplikowac wiersz - dodatkowy rekord dla tego samego genomu z kolejnym regionem kontolnym - jak jest więcej niż jeden region
+
+    # posegregować,  wyciągnać nazwy genów
+    # sortuję najpierw po genach potem po taksonomii
+
+
+    # wyjątki w taksonomi - ten sam gen pod inną nazwą
+    # Mammalia
+    # ile było przypadków oflanowania regionu kontrolnego okreslonymi genami - ile było przypadków kiedy było przypadków region kontrolny a gen jakiś w postaci previous a drugi ile przypadków region kontolny dla next gen
+    # tableka zbiorcza - poszczególne jednostek takosnomicznych, a kolumny to kombinacje genów
