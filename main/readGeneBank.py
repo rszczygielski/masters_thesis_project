@@ -45,6 +45,7 @@ class GeneBankReader():
         self.geneBankPath = geneBankPath
 
     def getAnnotations(self, annotations):
+        print(dir(annotations))
         return annotations["accessions"], annotations["organism"], annotations["taxonomy"]
 
     def pairwise(self, iterable):
