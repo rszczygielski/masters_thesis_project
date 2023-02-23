@@ -53,29 +53,33 @@ class GeneBankReader():
         next(b, None)
         return zip(a, b)
 
+    def getNextGenFromFeatures(self, features, controlRegionIndex):
+        if len(features) - 1 == controlRegionIndex:
+            nextGene = features[0]
+            if features[0].type == "source":
+                nextGene = features[1]
+                if features[1].type == "gene":
+                    nextGene = features[2]
+        else:
+            nextGene = features[controlRegionIndex + 1]
+        return nextGene
+
     def getFeatures(self, features):
         listOfFeatureStructs = []
-        controlRegionIndex = None
         for previousGene, controlRegion in self.pairwise(features):
+            controlRegionIndex = None
+            if "control region" in controlRegion.type or "D-loop" in controlRegion.type:
+                controlRegionIndex = features.index(controlRegion)
+                nextGene =  self.getNextGenFromFeatures(features, controlRegionIndex)
+                listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
+                continue
             for featureValue in controlRegion.qualifiers.values():
                 if "control region" in featureValue or "D-loop" in featureValue:
                     controlRegionIndex = features.index(controlRegion)
-                    # break
-        if controlRegionIndex:
-            if len(features) - 1 == controlRegionIndex:
-                nextGene = features[0]
-                if features[0].type == "source":
-                    nextGene = features[1]
-                    if features[1].type == "gene":
-                        nextGene = features[2]
-            else:
-                nextGene = features[controlRegionIndex + 1]
-            # return FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene])
-            listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
+                if controlRegionIndex:
+                    nextGene =  self.getNextGenFromFeatures(features, controlRegionIndex)
+                    listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
         return listOfFeatureStructs
-        # else:
-        #     # return None, None, None
-        #     return None
 
     def extractGeneInfoToOneLineStr(self, gene):
         name = gene.type
@@ -91,28 +95,28 @@ class GeneBankReader():
         with open(self.geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
-                # featureStruct = self.getFeatures(record.features)
                 featureStructList = self.getFeatures(record.features)
-                # print(featureStruct.controlRegion)
-                # if featureStruct == None:
-                #     continue
+                if len(featureStructList) == 0:
+                    continue
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                 for featureStruct in featureStructList:
                     rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
                     listOfRows.append(rowStruct.__str__())
         return listOfRows
 
-    def saveRowToFile(self):
+    def saveRowToFile(self, saveName):
         listOfRows = self.readGeneBankFile()
-        with open("Organisms_CR.txt", "w") as saveFile:
+        with open(f"../results/{saveName}", "w") as saveFile:
             saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
             for row in listOfRows:
                 saveFile.write(f"{row}\n")
                 print(f"{row} added to file")
 
 if __name__ == "__main__":
-    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    geneBankReader.saveRowToFile()
+    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    geneBankReader.saveRowToFile("Organisms_mitochondion_1.txt")
+    # geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    # geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
 
     # pominąć source
     # brac wszystkie regiony kontrolne które są
