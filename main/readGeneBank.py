@@ -31,7 +31,7 @@ class RowStruct():
         self.previousFeature = previousFeature
         self.controlRegion = controlRegion
         self.nextFeature = nextFeature
-        self.accesionName = accesionName[0]
+        self.accesionName = accesionName
         self.controlRegion = controlRegion
         self.taxonomy = taxonomy
         self.organism = organism
@@ -45,8 +45,7 @@ class GeneBankReader():
         self.geneBankPath = geneBankPath
 
     def getAnnotations(self, annotations):
-        print(dir(annotations))
-        return annotations["accessions"], annotations["organism"], annotations["taxonomy"]
+        return f"{annotations['accessions'][0]}.{annotations['sequence_version']}", annotations["organism"], annotations["taxonomy"]
 
     def pairwise(self, iterable):
         "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -114,8 +113,8 @@ class GeneBankReader():
                 print(f"{row} added to file")
 
 if __name__ == "__main__":
-    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    geneBankReader.saveRowToFile("Organisms_mitochondion_1.txt")
+    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
     # geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     # geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
 
