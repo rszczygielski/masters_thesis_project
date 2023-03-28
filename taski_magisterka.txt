@@ -1,0 +1,14 @@
+Misc_featrue koordynaty sprawdzenie z elemntem który jest wcześniej, jeżeli te koordynaty się zgadzają to biorę ten poprzedni gen jeśli nie zostwaiam meac_feature
+
+Błędne zczytywanie source jesli dloop jako pierwszy, uwzględnić opcje gdzie dloop jako dloop jest pierwsz lub drógi
+
+Dla danej grupy taksonomicznej może być kilka rónych par genow otaczjacych dloop i teraz zalyżny nam na parach genów w pliku zbiorcznym czyli osobny wiersz z kolejną parą
+
+zebrać sobie te informacje do gerneral info z plików agregacji
+
+wyrzucić kolumnę B i F zostawić tylko specyficzne nazwy genów
+
+szukać grupy taksonomicznej tylko na ostatniej grupie
+
+można spróbować przez sprawdzać koordynaty prvious region i next jeśli jest poprzedni i następny gen w całości lub na niego nachodzi tyko sprawdzmay nastęny region, next i previos to taki gen który nie zachodzi w 
+ogóle na region kontorlny
