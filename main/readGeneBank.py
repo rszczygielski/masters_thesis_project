@@ -1,5 +1,6 @@
 from Bio import SeqIO
 import itertools
+import re
 
 class FeatureStruct():
     def __init__(self, previousGene, controlRegion, nextGene):
@@ -53,32 +54,85 @@ class GeneBankReader():
         next(b, None)
         return zip(a, b)
 
-    def getNextGenFromFeatures(self, features, controlRegionIndex):
-        if len(features) - 1 == controlRegionIndex:
-            nextGene = features[0]
-            if features[0].type == "source":
-                nextGene = features[1]
-                if features[1].type == "gene":
-                    nextGene = features[2]
+    def getOneOfTenPreviosGenes(self, controlRegionLocation, features, previousGeneIndex, controlRegion):
+        if len(controlRegionLocation) > 2: #chceking if there are multiple locations asigned to control region
+            if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source":
+                previousGeneIndex  -= 1
+            previousGene = features[previousGeneIndex]
+            return previousGene
+        range_of_locations = range(controlRegionLocation[0]+1, controlRegionLocation[-1])
+        for number in range(11): #looping through 10 previos genes and comparing locations
+            previousGeneIndex = previousGeneIndex - number
+            previousGene = features[previousGeneIndex]
+            previousGeneLocation = list(map(int, re.findall(r'\d+', str(previousGene.location))))
+            if len(previousGeneLocation) > 2 :
+                continue
+            if previousGeneLocation[0] not in range_of_locations and previousGeneLocation[-1] not in range_of_locations:
+                if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region":
+                    continue
+                return previousGene
+            else:
+                continue
+        previousGene = features[previousGeneIndex + 10]
+        return previousGene
+
+    def getPreviousGene(self, features, controlRegion):
+        controlRegionIndex = features.index(controlRegion)
+        if controlRegionIndex == 1:
+            previousGeneIndex = -1
         else:
-            nextGene = features[controlRegionIndex + 1]
+            previousGeneIndex = controlRegionIndex - 1
+        controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
+        previousGene = self.getOneOfTenPreviosGenes(controlRegionLocation, features, previousGeneIndex, controlRegion)
+        return previousGene
+
+    def getOneOfTenNextGenes(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
+        if len(controlRegionLocation) > 2:
+            if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source":
+                nextGeneIndex  += 1
+            nextGene = features[nextGeneIndex]
+            return nextGene
+        range_of_locations = range(controlRegionLocation[0]+1, controlRegionLocation[-1])
+        for number in range(11):
+            nextGeneIndex = nextGeneIndex + number
+            if nextGeneIndex >= len(features):
+                nextGeneIndex = 1
+            nextGene = features[nextGeneIndex]
+            nextGeneLocation = list(map(int, re.findall(r'\d+', str(nextGene.location))))
+            if len(nextGeneLocation) > 2 :
+                continue
+            if nextGeneLocation[0] not in range_of_locations and nextGeneLocation[-1] not in range_of_locations:
+                if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region":
+                    continue
+                return nextGene
+            else:
+                continue
+        nextGene = features[nextGeneIndex - 10]
+        return nextGene
+
+    def getNextGene(self, features, controlRegion):
+        controlRegionIndex = features.index(controlRegion)
+        if controlRegionIndex == -1:
+            nextGeneIndex = 1
+        else:
+            nextGeneIndex = controlRegionIndex + 1
+        controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
+        nextGene = self.getOneOfTenNextGenes(controlRegionLocation, features, nextGeneIndex, controlRegion)
         return nextGene
 
     def getFeatures(self, features):
         listOfFeatureStructs = []
-        for previousGene, controlRegion in self.pairwise(features):
-            controlRegionIndex = None
-            if "control region" in controlRegion.type or "D-loop" in controlRegion.type:
-                controlRegionIndex = features.index(controlRegion)
-                nextGene =  self.getNextGenFromFeatures(features, controlRegionIndex)
-                listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
-                continue
-            for featureValue in controlRegion.qualifiers.values():
-                if "control region" in featureValue or "D-loop" in featureValue:
-                    controlRegionIndex = features.index(controlRegion)
-                if controlRegionIndex:
-                    nextGene =  self.getNextGenFromFeatures(features, controlRegionIndex)
-                    listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, controlRegion, nextGene]))
+        for gene in features:
+            if "control region" in gene.type or "D-loop" in gene.type:
+                previousGene = self.getPreviousGene(features, gene)
+                nextGene = self.getNextGene(features, gene)
+                listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
+            else:
+                for featureValue in gene.qualifiers.values():
+                    if "control region" in featureValue or "D-loop" in featureValue:
+                        previousGene = self.getPreviousGene(features, gene)
+                        nextGene = self.getNextGene(features, gene)
+                        listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
         return listOfFeatureStructs
 
     def extractGeneInfoToOneLineStr(self, gene):
@@ -111,22 +165,10 @@ class GeneBankReader():
             for row in listOfRows:
                 saveFile.write(f"{row}\n")
                 print(f"{row} added to file")
+            print("SAVEING FINISHED")
 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    geneBankReader.saveRowToFile("Organisms_mitochondion_1.txt")
-    # geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    # geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
-
-    # pominąć source
-    # brac wszystkie regiony kontrolne które są
-    # duplikowac wiersz - dodatkowy rekord dla tego samego genomu z kolejnym regionem kontolnym - jak jest więcej niż jeden region
-
-    # posegregować,  wyciągnać nazwy genów
-    # sortuję najpierw po genach potem po taksonomii
-
-
-    # wyjątki w taksonomi - ten sam gen pod inną nazwą
-    # Mammalia
-    # ile było przypadków oflanowania regionu kontrolnego okreslonymi genami - ile było przypadków kiedy było przypadków region kontrolny a gen jakiś w postaci previous a drugi ile przypadków region kontolny dla next gen
-    # tableka zbiorcza - poszczególne jednostek takosnomicznych, a kolumny to kombinacje genów
+    geneBankReader.saveRowToFile("mitochondrion_1.txt")
+    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
