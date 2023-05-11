@@ -123,7 +123,7 @@ class GeneBankReader():
     def getFeatures(self, features):
         listOfFeatureStructs = []
         for gene in features:
-            if "control region" in gene.type or "D-loop" in gene.type:
+            if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
                 previousGene = self.getPreviousGene(features, gene)
                 nextGene = self.getNextGene(features, gene)
                 listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
