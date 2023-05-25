@@ -2,7 +2,7 @@ Misc_featrue koordynaty sprawdzenie z elemntem który jest wcześniej, jeżeli t
 
 Błędne zczytywanie source jesli dloop jako pierwszy, uwzględnić opcje gdzie dloop jako dloop jest pierwsz lub drógi
 
-Dla danej grupy taksonomicznej może być kilka rónych par genow otaczjacych dloop i teraz zalyżny nam na parach genów w pliku zbiorcznym czyli osobny wiersz z kolejną parą
+Dla danej grupy taksonomicznej może być kilka rónych par genow otaczjacych dloop i teraz zależy nam na parach genów w pliku zbiorcznym czyli osobny wiersz z kolejną parą
 
 zebrać sobie te informacje do gerneral info z plików agregacji
 
@@ -32,3 +32,9 @@ ogóle na region kontorlny
     # Mammalia
     # ile było przypadków oflanowania regionu kontrolnego okreslonymi genami - ile było przypadków kiedy było przypadków region kontrolny a gen jakiś w postaci previous a drugi ile przypadków region kontolny dla next gen
     # tableka zbiorcza - poszczególne jednostek takosnomicznych, a kolumny to kombinacje genów
+    '
+jak jest CDS to bierzemy =produkt - chyba nie odpaliłem skryptu po updatecie
+
+iść przez podgrupy pokoleii i sprawdzam po kolei czy wszystkie podgrupy mają taki sam rozkład genów poprzednich i następnych względem dloop
+statystki dla charakterystycznej podgrupy czyli dla danej podgrupy ucinam 5 rekordów to zliczam to dla tej podgrupy
+ujednolicić nazwy

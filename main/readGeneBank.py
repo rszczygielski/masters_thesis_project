@@ -145,7 +145,7 @@ class GeneBankReader():
         return f"{name} {location} {product}"
 
     def readGeneBankFile(self):
-        listOfRows = []
+        listOfRowStructs = []
         with open(self.geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
@@ -155,20 +155,20 @@ class GeneBankReader():
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                 for featureStruct in featureStructList:
                     rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
-                    listOfRows.append(rowStruct.__str__())
-        return listOfRows
+                    listOfRowStructs.append(rowStruct)
+        return listOfRowStructs
 
     def saveRowToFile(self, saveName):
-        listOfRows = self.readGeneBankFile()
+        listOfRowStructs = self.readGeneBankFile()
         with open(f"../results/{saveName}", "w") as saveFile:
             saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
-            for row in listOfRows:
+            for row in listOfRowStructs:
                 saveFile.write(f"{row}\n")
-                print(f"{row} added to file")
-            print("SAVEING FINISHED")
+                print(f"{row.accesionName} added to file")
+            print(f"SAVEING {saveName} FINISHED")
 
 if __name__ == "__main__":
-    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    geneBankReader.saveRowToFile("mitochondrion_1.txt")
-    geneBankReader = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    geneBankReader.saveRowToFile("Organisms_mitochondion_2.txt")
+    geneBankReader_1 = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    geneBankReader_1.saveRowToFile("mitochondrion_1.txt")
+    geneBankReader_2 = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    geneBankReader_2.saveRowToFile("mitochondrion_2.txt")
