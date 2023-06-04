@@ -14,26 +14,17 @@ można spróbować przez sprawdzać koordynaty prvious region i next jeśli jest
 ogóle na region kontorlny
 
 
+pominąć source
+brac wszystkie regiony kontrolne które są
+duplikowac wiersz - dodatkowy rekord dla tego samego genomu z kolejnym regionem kontolnym - jak jest więcej niż jeden region
+posegregować,  wyciągnać nazwy genów
+sortuję najpierw po genach potem po taksonomii
+wyjątki w taksonomi - ten sam gen pod inną nazwą
+Mammalia
+ile było przypadków oflanowania regionu kontrolnego okreslonymi genami - ile było przypadków kiedy było przypadków region kontrolny a gen jakiś w postaci previous a drugi ile przypadków region kontolny dla next gen
+tableka zbiorcza - poszczególne jednostek takosnomicznych, a kolumny to kombinacje genów
 
-
-
-
-
-
-    # pominąć source
-    # brac wszystkie regiony kontrolne które są
-    # duplikowac wiersz - dodatkowy rekord dla tego samego genomu z kolejnym regionem kontolnym - jak jest więcej niż jeden region
-
-    # posegregować,  wyciągnać nazwy genów
-    # sortuję najpierw po genach potem po taksonomii
-
-
-    # wyjątki w taksonomi - ten sam gen pod inną nazwą
-    # Mammalia
-    # ile było przypadków oflanowania regionu kontrolnego okreslonymi genami - ile było przypadków kiedy było przypadków region kontrolny a gen jakiś w postaci previous a drugi ile przypadków region kontolny dla next gen
-    # tableka zbiorcza - poszczególne jednostek takosnomicznych, a kolumny to kombinacje genów
-    '
-jak jest CDS to bierzemy =produkt - chyba nie odpaliłem skryptu po updatecie
+jak jest CDS to bierzemy =produkt - chyba nie odpaliłem skryptu po updatecie fixed
 
 iść przez podgrupy pokoleii i sprawdzam po kolei czy wszystkie podgrupy mają taki sam rozkład genów poprzednich i następnych względem dloop
 statystki dla charakterystycznej podgrupy czyli dla danej podgrupy ucinam 5 rekordów to zliczam to dla tej podgrupy

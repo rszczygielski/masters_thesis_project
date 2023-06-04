@@ -1,0 +1,29 @@
+NEXT_GENE unique_values = ['tRNA-Pro', 'tRNA-Thr', 'tRNA-Phe', 'misc_feature',
+       'NADH dehydrogenase subunit 6', 'tRNA-Asp', 'tRNA-Glu', 'tRNA-Gln',
+       'tRNA-Leu', 'NADH dehydrogenase subunit 1', 'tRNA-Val', 'tRNA-Trp',
+       'NADH dehydrogenase subunit 2', 'cytochrome b', 'tRNA-Ile',
+       'tRNA-Ser', 'source', 's-rRNA', 'tRNA-Ala', 'rRNA', 'tRNA-Lys',
+       'cytochrome c oxidase subunit I', 'tRNA-Cys', 'tRNA-Gly',
+       'small subunit ribosomal RNA', 'tRNA-Tyr', 'tRNA-Arg', 'gene',
+       'NADH dehydrogenase subunit 4L', 'NADH dehydrogenase subunit 3',
+       'tRNA-Met', 'NADH dehydrogenase subunit 4', 'tRNA-Asn',
+       'cytochrome c oxidase subunit II', 'l-rRNA',
+       'large subunit ribosomal RNA']
+
+
+CONTROL_REGION unique_values = ['D-loop', 'misc_feature', 'regulatory', 'stem_loop', 'rep_origin',
+       'repeat_region', 'ncRNA', 'C_region', 'misc_structure', 'gene']
+
+
+ PREVIOUS_GENE unique_values ['tRNA-Phe', 'tRNA-Val', 'gene', 'tRNA-Pro', 'tRNA-Thr', 'tRNA-Asp',
+       'NADH dehydrogenase subunit 2', 'tRNA-Gln', 'tRNA-Leu', 'tRNA-Cys',
+       'rRNA', 'NADH dehydrogenase subunit 1',
+       'NADH dehydrogenase subunit 6', 'tRNA-Ile', 's-rRNA', 'tRNA-Trp',
+       'NADH dehydrogenase subunit 5', 'tRNA-Ala', 'misc_feature',
+       'tRNA-Glu', 'tRNA-His', 'tRNA-Ser', 'NADH dehydrogenase subunit 3',
+       'ATP synthase F0 subunit 6', 'cytochrome c oxidase subunit I',
+       'cytochrome c oxidase subunit III', 'tRNA-Tyr', 'cytochrome b',
+       'tRNA-Met', 'tRNA-Lys', 'tRNA-Asn', 'tRNA-Arg',
+       'cytochrome c oxidase subunit II', 'ATP synthase F0 subunit 8',
+       'small subunit ribosomal RNA', 'large subunit ribosomal RNA',
+       'tRNA-Gly']

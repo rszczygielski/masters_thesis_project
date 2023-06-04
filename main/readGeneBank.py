@@ -56,7 +56,7 @@ class GeneBankReader():
 
     def getOneOfTenPreviosGenes(self, controlRegionLocation, features, previousGeneIndex, controlRegion):
         if len(controlRegionLocation) > 2: #chceking if there are multiple locations asigned to control region
-            if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source":
+            if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source" or features[previousGeneIndex].type == "D-loop":
                 previousGeneIndex  -= 1
             previousGene = features[previousGeneIndex]
             return previousGene
@@ -68,7 +68,7 @@ class GeneBankReader():
             if len(previousGeneLocation) > 2 :
                 continue
             if previousGeneLocation[0] not in range_of_locations and previousGeneLocation[-1] not in range_of_locations:
-                if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region":
+                if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "D-loop":
                     continue
                 return previousGene
             else:
@@ -88,7 +88,7 @@ class GeneBankReader():
 
     def getOneOfTenNextGenes(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
         if len(controlRegionLocation) > 2:
-            if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source":
+            if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop":
                 nextGeneIndex  += 1
             nextGene = features[nextGeneIndex]
             return nextGene
@@ -102,7 +102,7 @@ class GeneBankReader():
             if len(nextGeneLocation) > 2 :
                 continue
             if nextGeneLocation[0] not in range_of_locations and nextGeneLocation[-1] not in range_of_locations:
-                if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region":
+                if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region" or  nextGene.type == "D-loop":
                     continue
                 return nextGene
             else:
@@ -130,6 +130,7 @@ class GeneBankReader():
             else:
                 for featureValue in gene.qualifiers.values():
                     if "control region" in featureValue or "D-loop" in featureValue:
+                        print(gene)
                         previousGene = self.getPreviousGene(features, gene)
                         nextGene = self.getNextGene(features, gene)
                         listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
@@ -164,8 +165,8 @@ class GeneBankReader():
             saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
             for row in listOfRowStructs:
                 saveFile.write(f"{row}\n")
-                print(f"{row.accesionName} added to file")
-            print(f"SAVEING {saveName} FINISHED")
+                # print(f"{row.accesionName} added to file")
+            print(f"\033[92mSAVEING {saveName} FINISHED\033[0m")
 
 if __name__ == "__main__":
     geneBankReader_1 = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
