@@ -84,6 +84,9 @@ class GeneBankReader():
             previousGeneIndex = controlRegionIndex - 1
         controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
         previousGene = self.getOneOfTenPreviosGenes(controlRegionLocation, features, previousGeneIndex, controlRegion)
+        if previousGene.type == "misc_feature":
+            print(previousGene)
+            print(controlRegion)
         return previousGene
 
     def getOneOfTenNextGenes(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
@@ -129,8 +132,8 @@ class GeneBankReader():
                 listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
             else:
                 for featureValue in gene.qualifiers.values():
-                    if "control region" in featureValue or "D-loop" in featureValue:
-                        print(gene)
+                    if "source" in featureValue or "control region" in featureValue or "D-loop" in featureValue:
+                        # print(gene)
                         previousGene = self.getPreviousGene(features, gene)
                         nextGene = self.getNextGene(features, gene)
                         listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))

@@ -29,3 +29,13 @@ jak jest CDS to bierzemy =produkt - chyba nie odpaliłem skryptu po updatecie fi
 iść przez podgrupy pokoleii i sprawdzam po kolei czy wszystkie podgrupy mają taki sam rozkład genów poprzednich i następnych względem dloop
 statystki dla charakterystycznej podgrupy czyli dla danej podgrupy ucinam 5 rekordów to zliczam to dla tej podgrupy
 ujednolicić nazwy
+
+
+
+rekord 510, 540 - błąd jest w odczytywaniu tego pliku
+rekord 981
+
+
+zliczyć ile jest unikalnych numrów dosępnych i zliczyć takie genomy które nie mają dloop i dla tych których nie ma wyciąć te regiony
+
+Idea jest taka, że dla genomów które nie mają regionu kontrolnego na podstawie danych jakie wyprodukuje znaleźc geny poprzedzajace i następujące regionu kontorlnego i je jakoś wyciąć

@@ -2,10 +2,6 @@ from IPython.display import display
 from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
 import pandas as pd
-import ast
-import numpy as np
-import os
-from numpy import nan
 
 class SortTaxonomy():
     def __init__(self, path):
@@ -45,13 +41,13 @@ class SortTaxonomy():
 
     def save_data_frame_to_exl(self, path, type_of_file):
         previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE")
-        previos_gene_df.to_excel(f"{path}/sorted_previous_gene_mit{type_of_file}.xlsx")
+        previos_gene_df.to_excel(f"{path}/selected_previous_gene_mit{type_of_file}.xlsx")
         print(f"\033[92mPrevios Gene saved\033[0m")
         next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE")
-        next_gene_df.to_excel(f"{path}/sorted_next_gene_mit{type_of_file}.xlsx")
+        next_gene_df.to_excel(f"{path}/selected_next_gene_mit{type_of_file}.xlsx")
         print(f"\033[92mNext Gene saved\033[0m")
 
 if __name__ == "__main__":
-    type_of_file = "1"
+    type_of_file = "2"
     sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/General_info_mitochondrion_{type_of_file}.xlsx")
     sortTaxonomy.save_data_frame_to_exl(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/mitochondrion_{type_of_file}/", type_of_file)
