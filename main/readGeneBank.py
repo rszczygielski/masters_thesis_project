@@ -1,6 +1,13 @@
 from Bio import SeqIO
 import itertools
 import re
+import pandas as pd
+
+class GeneStruct():
+    def __init__(self, name, location, product):
+        self.name = name
+        self.location = location
+        self.product = product
 
 class FeatureStruct():
     def __init__(self, previousGene, controlRegion, nextGene):
@@ -10,13 +17,13 @@ class FeatureStruct():
 
     @staticmethod
     def extractGeneInfoToOneLineStr(gene):
-        name = gene.type
-        location = gene.location
+        name = str(gene.type)
+        location = str(gene.location)
         if "product" in gene.qualifiers:
-            product = gene.qualifiers["product"]
+            product = str(gene.qualifiers["product"])
         else:
             product = None
-        return f"{name} {location} {product}"
+        return GeneStruct(name, location, product)
 
     @classmethod
     def initFromSeqFeatureClass(cls, geneList):
@@ -42,8 +49,6 @@ class RowStruct():
         {self.previousFeature}\t{self.controlRegion}\t{self.nextFeature}"
 
 class GeneBankReader():
-    def __init__(self, geneBankPath):
-        self.geneBankPath = geneBankPath
 
     def getAnnotations(self, annotations):
         return f"{annotations['accessions'][0]}.{annotations['sequence_version']}", annotations["organism"], annotations["taxonomy"]
@@ -84,9 +89,9 @@ class GeneBankReader():
             previousGeneIndex = controlRegionIndex - 1
         controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
         previousGene = self.getOneOfTenPreviosGenes(controlRegionLocation, features, previousGeneIndex, controlRegion)
-        if previousGene.type == "misc_feature":
-            print(previousGene)
-            print(controlRegion)
+        # if previousGene.type == "misc_feature":
+            # print(previousGene)
+            # print(controlRegion)
         return previousGene
 
     def getOneOfTenNextGenes(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
@@ -148,9 +153,19 @@ class GeneBankReader():
             product = None
         return f"{name} {location} {product}"
 
-    def readGeneBankFile(self):
-        listOfRowStructs = []
-        with open(self.geneBankPath) as geneBankFile:
+    def readGeneBankFile(self, geneBankPath):
+        geneDict = {"ACCESSION": [],
+                        "ORGANISM": [],
+                        "TAXONOMY": [],
+                        "PREVIOUS_GENE_NAME": [],
+                        "PREVIOUS_GENE_LOCATION": [],
+                        "PREVIOUS_GENE_NAME_PRODUCT": [],
+                        "CONTROL_REGION_NAME": [],
+                        "CONTROL_REGION_LOCATION": [],
+                        "NEXT_GENE_NAME": [],
+                        "NEXT_GENE_LOCATION": [],
+                        "NEXT_GENE_NAME_PRODUCT": []}
+        with open(geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
                 featureStructList = self.getFeatures(record.features)
@@ -158,21 +173,32 @@ class GeneBankReader():
                     continue
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                 for featureStruct in featureStructList:
-                    rowStruct = RowStruct(featureStruct.previousGene, featureStruct.controlRegion, featureStruct.nextGene, accessions, taxonomy, organism)
-                    listOfRowStructs.append(rowStruct)
-        return listOfRowStructs
+                    geneDict["ACCESSION"].append(accessions)
+                    geneDict["ORGANISM"].append(organism)
+                    geneDict["TAXONOMY"].append(taxonomy)
+                    geneDict["PREVIOUS_GENE_NAME"].append(featureStruct.previousGene.name)
+                    geneDict["PREVIOUS_GENE_LOCATION"].append(featureStruct.previousGene.location)
+                    geneDict["PREVIOUS_GENE_NAME_PRODUCT"].append(featureStruct.previousGene.product)
+                    geneDict["CONTROL_REGION_NAME"].append(featureStruct.controlRegion.name)
+                    geneDict["CONTROL_REGION_LOCATION"].append(featureStruct.controlRegion.location)
+                    geneDict["NEXT_GENE_NAME"].append(featureStruct.nextGene.name)
+                    geneDict["NEXT_GENE_LOCATION"].append(featureStruct.nextGene.location)
+                    geneDict["NEXT_GENE_NAME_PRODUCT"].append(featureStruct.nextGene.product)
+        geneDf = pd.DataFrame.from_dict(geneDict)
+        geneDf = geneDf.set_index("ACCESSION")
+        return geneDf
 
-    def saveRowToFile(self, saveName):
-        listOfRowStructs = self.readGeneBankFile()
-        with open(f"../results/{saveName}", "w") as saveFile:
-            saveFile.write("ACCESSION\tORGANISM\tTAXONOMY\tPREVIOUS_GENE\tCONTROL_REGION\tNEXT_GENE\n")
-            for row in listOfRowStructs:
-                saveFile.write(f"{row}\n")
-                # print(f"{row.accesionName} added to file")
-            print(f"\033[92mSAVEING {saveName} FINISHED\033[0m")
+    def mergeTwoDataFrames(self, df1, df2):
+        return pd.concat([df1, df2])
+
+    def saveDataFrameToFile(self, savePath, geneDf):
+        geneDf.to_excel(savePath)
+
 
 if __name__ == "__main__":
-    geneBankReader_1 = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    geneBankReader_1.saveRowToFile("mitochondrion_1.txt")
-    geneBankReader_2 = GeneBankReader("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    geneBankReader_2.saveRowToFile("mitochondrion_2.txt")
+    geneBankReader = GeneBankReader()
+    mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion_2.xlsx", mitochondrion2_df)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
