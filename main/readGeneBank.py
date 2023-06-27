@@ -27,6 +27,7 @@ class FeatureStruct():
 
     @classmethod
     def initFromSeqFeatureClass(cls, geneList):
+        # print(geneList)
         mapObject = map(cls.extractGeneInfoToOneLineStr, geneList)
         geneList = list(mapObject)
         previousGene = geneList[0]
@@ -59,88 +60,84 @@ class GeneBankReader():
         next(b, None)
         return zip(a, b)
 
-    def getOneOfTenPreviosGenes(self, controlRegionLocation, features, previousGeneIndex, controlRegion):
-        if len(controlRegionLocation) > 2: #chceking if there are multiple locations asigned to control region
-            if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source" or features[previousGeneIndex].type == "D-loop":
-                previousGeneIndex  -= 1
+    def getSelectedPreviousGene(self, controlRegionLocation, features, previousGeneIndex, controlRegion):
+        range_of_locations = range(controlRegionLocation[0], controlRegionLocation[-1]) # getting range values for the given location of CR
+        originalPreviousGeneIndex = previousGeneIndex
+        for number in range(11): # looping through 10 previos genes and comparing locations
+            previousGeneIndex = originalPreviousGeneIndex - number #creating new gene index
+            if previousGeneIndex < 1:
+                previousGeneIndex = len(features) - 1
+                previousGene = features[previousGeneIndex]
+                return previousGene # returning gene while crossing borrder line
             previousGene = features[previousGeneIndex]
-            return previousGene
-        range_of_locations = range(controlRegionLocation[0]+1, controlRegionLocation[-1])
-        for number in range(11): #looping through 10 previos genes and comparing locations
-            previousGeneIndex = previousGeneIndex - number
-            previousGene = features[previousGeneIndex]
-            previousGeneLocation = list(map(int, re.findall(r'\d+', str(previousGene.location))))
+            if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "D-loop":
+                    continue # skipping unnecessary genes
+            previousGeneLocation = list(map(int, re.findall(r'\d+', str(previousGene.location)))) # getting range values for the given location of gene
             if len(previousGeneLocation) > 2 :
-                continue
+                continue # skipping examples with multiple coordinates
             if previousGeneLocation[0] not in range_of_locations and previousGeneLocation[-1] not in range_of_locations:
-                if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "D-loop":
-                    continue
-                return previousGene
+                return previousGene # returning the gene when coordiantes are not corssing
             else:
                 continue
-        previousGene = features[previousGeneIndex + 10]
-        return previousGene
+        return features[originalPreviousGeneIndex] #after checking 10 gens returing the gene which is the closest to CR
 
-    def getPreviousGene(self, features, controlRegion):
-        controlRegionIndex = features.index(controlRegion)
-        if controlRegionIndex == 1:
-            previousGeneIndex = -1
-        else:
-            previousGeneIndex = controlRegionIndex - 1
-        controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
-        previousGene = self.getOneOfTenPreviosGenes(controlRegionLocation, features, previousGeneIndex, controlRegion)
-        # if previousGene.type == "misc_feature":
-            # print(previousGene)
-            # print(controlRegion)
-        return previousGene
-
-    def getOneOfTenNextGenes(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
-        if len(controlRegionLocation) > 2:
-            if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop":
-                nextGeneIndex  += 1
-            nextGene = features[nextGeneIndex]
-            return nextGene
-        range_of_locations = range(controlRegionLocation[0]+1, controlRegionLocation[-1])
+    def getSelectedNextGene(self, controlRegionLocation, features, nextGeneIndex, controlRegion):
+        range_of_locations = range(controlRegionLocation[0], controlRegionLocation[-1])
+        originalNextGeneIndex = nextGeneIndex
         for number in range(11):
-            nextGeneIndex = nextGeneIndex + number
+            nextGeneIndex = originalNextGeneIndex + number
             if nextGeneIndex >= len(features):
                 nextGeneIndex = 1
+                nextGene = features[nextGeneIndex]
+                return nextGene
             nextGene = features[nextGeneIndex]
+            if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region" or  nextGene.type == "D-loop":
+                continue
             nextGeneLocation = list(map(int, re.findall(r'\d+', str(nextGene.location))))
             if len(nextGeneLocation) > 2 :
                 continue
             if nextGeneLocation[0] not in range_of_locations and nextGeneLocation[-1] not in range_of_locations:
-                if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region" or  nextGene.type == "D-loop":
-                    continue
                 return nextGene
             else:
                 continue
-        nextGene = features[nextGeneIndex - 10]
-        return nextGene
+        return features[originalNextGeneIndex]
 
-    def getNextGene(self, features, controlRegion):
-        controlRegionIndex = features.index(controlRegion)
+    def getSurroundingGeneIndexes(self, controlRegionIndex):
         if controlRegionIndex == -1:
             nextGeneIndex = 1
+            previousGeneIndex = controlRegionIndex - 1
+        elif controlRegionIndex == 1:
+            previousGeneIndex = -1
+            nextGeneIndex = controlRegionIndex + 1
         else:
             nextGeneIndex = controlRegionIndex + 1
-        controlRegionLocation = list(map(int, re.findall(r'\d+', str(controlRegion.location))))
-        nextGene = self.getOneOfTenNextGenes(controlRegionLocation, features, nextGeneIndex, controlRegion)
-        return nextGene
+            previousGeneIndex = controlRegionIndex - 1
+        return (previousGeneIndex, nextGeneIndex)
 
     def getFeatures(self, features):
         listOfFeatureStructs = []
         for gene in features:
+            geneIndex = features.index(gene)
+            previousGeneIndex, nextGeneIndex = self.getSurroundingGeneIndexes(geneIndex)
+            controlRegionLocation = list(map(int, re.findall(r'\d+', str(gene.location))))
             if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
-                previousGene = self.getPreviousGene(features, gene)
-                nextGene = self.getNextGene(features, gene)
-                listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
+                if len(controlRegionLocation) > 2:
+                    if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop":
+                        nextGeneIndex  += 1
+                    if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source" or features[previousGeneIndex].type == "D-loop":
+                        previousGeneIndex  -= 1
+                    nextGene = features[nextGeneIndex]
+                    previousGene = features[previousGeneIndex]
+                    listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
+                else:
+                    previousGene = self.getSelectedPreviousGene(controlRegionLocation, features, previousGeneIndex, gene)
+                    nextGene = self.getSelectedNextGene(controlRegionLocation, features, nextGeneIndex, gene)
+                    listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
             else:
                 for featureValue in gene.qualifiers.values():
                     if "source" in featureValue or "control region" in featureValue or "D-loop" in featureValue:
-                        # print(gene)
-                        previousGene = self.getPreviousGene(features, gene)
-                        nextGene = self.getNextGene(features, gene)
+                        previousGene = self.getSelectedPreviousGene(controlRegionLocation, features, previousGeneIndex, gene)
+                        nextGene = self.getSelectedNextGene(controlRegionLocation, features, nextGeneIndex, gene)
                         listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
         return listOfFeatureStructs
 
@@ -200,5 +197,14 @@ if __name__ == "__main__":
     mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
     mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion_2.xlsx", mitochondrion2_df)
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion_2.xlsx", mitochondrion2_df)
     geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
+
+    # test_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/sequence_test2.gb")
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/test.xlsx", test_df)
+
+    # new_seq_testing = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/new_seq_for_testing.gbff")
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/test_seq_results.xlsx", new_seq_testing)
+
+
+    # przypadki gdzie podczas iteracji przechodzę z ostatniego na pierwszy (next) i z pierwszego na ostatni (prevois)
