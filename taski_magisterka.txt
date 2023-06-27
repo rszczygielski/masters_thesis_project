@@ -39,3 +39,8 @@ rekord 981
 zliczyć ile jest unikalnych numrów dosępnych i zliczyć takie genomy które nie mają dloop i dla tych których nie ma wyciąć te regiony
 
 Idea jest taka, że dla genomów które nie mają regionu kontrolnego na podstawie danych jakie wyprodukuje znaleźc geny poprzedzajace i następujące regionu kontorlnego i je jakoś wyciąć
+
+
+dodać 1 do tych koordynatów pierwszych albo znaleźć rozwiązenie w biopythonie
+potestować rozwiązania
+znormalizować nazwy

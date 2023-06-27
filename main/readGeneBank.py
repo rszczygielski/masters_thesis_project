@@ -9,6 +9,17 @@ class GeneStruct():
         self.location = location
         self.product = product
 
+    @classmethod
+    def stripGeneEntries(cls, name, location, product):
+        location = location.replace("(+)", "")
+        location = location.replace("(-)", "")
+        caractersToReplace = ["[", "]", "'"]
+        for caracter in caractersToReplace:
+            location = location.replace(caracter, "")
+            if product:
+                product = product.replace(caracter, "")
+        return cls(name, location, product)
+
 class FeatureStruct():
     def __init__(self, previousGene, controlRegion, nextGene):
         self.previousGene = previousGene
@@ -23,7 +34,7 @@ class FeatureStruct():
             product = str(gene.qualifiers["product"])
         else:
             product = None
-        return GeneStruct(name, location, product)
+        return GeneStruct.stripGeneEntries(name, location, product)
 
     @classmethod
     def initFromSeqFeatureClass(cls, geneList):
@@ -52,6 +63,7 @@ class RowStruct():
 class GeneBankReader():
 
     def getAnnotations(self, annotations):
+        # taxonomy = str(annotations["taxonomy"]).replace("[", "").replace("]", "")
         return f"{annotations['accessions'][0]}.{annotations['sequence_version']}", annotations["organism"], annotations["taxonomy"]
 
     def pairwise(self, iterable):
@@ -197,7 +209,6 @@ if __name__ == "__main__":
     mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
     mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion_2.xlsx", mitochondrion2_df)
     geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
 
     # test_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/sequence_test2.gb")

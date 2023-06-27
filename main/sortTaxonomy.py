@@ -1,3 +1,4 @@
+import time
 from IPython.display import display
 from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
@@ -39,15 +40,14 @@ class SortTaxonomy():
                         break
         return main_df
 
-    def save_data_frame_to_exl(self, path, type_of_file):
-        previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE")
-        previos_gene_df.to_excel(f"{path}/selected_previous_gene_mit{type_of_file}.xlsx")
+    def save_data_frame_to_exl(self, path):
+        previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_NAME_PRODUCT")
+        previos_gene_df.to_excel(f"{path}/selected_previous_gene_mit.xlsx")
         print(f"\033[92mPrevios Gene saved\033[0m")
-        next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE")
-        next_gene_df.to_excel(f"{path}/selected_next_gene_mit{type_of_file}.xlsx")
+        next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE_NAME_PRODUCT")
+        next_gene_df.to_excel(f"{path}/selected_next_gene_mit.xlsx")
         print(f"\033[92mNext Gene saved\033[0m")
 
 if __name__ == "__main__":
-    type_of_file = "2"
-    sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/General_info_mitochondrion_{type_of_file}.xlsx")
-    sortTaxonomy.save_data_frame_to_exl(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/mitochondrion_{type_of_file}/", type_of_file)
+    sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx")
+    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/not_selected_mit")
