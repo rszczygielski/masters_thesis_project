@@ -1,5 +1,7 @@
 from Bio import SeqIO
+from Bio.SeqFeature import FeatureLocation
 import itertools
+import time
 import re
 import pandas as pd
 
@@ -11,8 +13,7 @@ class GeneStruct():
 
     @classmethod
     def stripGeneEntries(cls, name, location, product):
-        location = location.replace("(+)", "")
-        location = location.replace("(-)", "")
+        location = FeatureLocation(location.start + 1, location.end)
         caractersToReplace = ["[", "]", "'"]
         for caracter in caractersToReplace:
             location = location.replace(caracter, "")
@@ -150,6 +151,7 @@ class GeneBankReader():
                     if "source" in featureValue or "control region" in featureValue or "D-loop" in featureValue:
                         previousGene = self.getSelectedPreviousGene(controlRegionLocation, features, previousGeneIndex, gene)
                         nextGene = self.getSelectedNextGene(controlRegionLocation, features, nextGeneIndex, gene)
+                        # print(type(gene.location.start))
                         listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
         return listOfFeatureStructs
 
@@ -203,13 +205,51 @@ class GeneBankReader():
     def saveDataFrameToFile(self, savePath, geneDf):
         geneDf.to_excel(savePath)
 
+    def getDataFrameOfGenemesWithoutCR(self, geneBankPath):
+        geneDict = {"ACCESSION": [], "ORGANISM": [], "TAXONOMY": []}
+        recordCount = 0
+        with open(geneBankPath) as geneBankFile:
+            record = SeqIO.parse(geneBankFile, 'genbank')
+            for record in record.records:
+                recordCount += 1
+                features = record.features
+                hasCR = False
+                for gene in features:
+                    # print(gene.type)
+                    if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
+                        hasCR = True
+                        # print("test")
+                        break
+                    else:
+                        for featureValue in gene.qualifiers.values():
+                            if "control region" in featureValue or "D-loop" in featureValue:
+                                hasCR = True
+                                # print("test")
+                                break
+                            else:
+                                continue
+                if hasCR:
+                    continue
+                else:
+                    # recordCount += 1
+                    accessions, organism, taxonomy = self.getAnnotations(record.annotations)
+                    geneDict["ACCESSION"].append(accessions)
+                    geneDict["ORGANISM"].append(organism)
+                    geneDict["TAXONOMY"].append(taxonomy)
+        print(recordCount)
+        return geneDict
+
 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader()
     mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
+    # mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    # mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
+
+    # TESTING
+    # test_df = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    # print(test_df)
 
     # test_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/sequence_test2.gb")
     # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/test.xlsx", test_df)
