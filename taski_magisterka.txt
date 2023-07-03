@@ -44,3 +44,7 @@ Idea jest taka, że dla genomów które nie mają regionu kontrolnego na podstaw
 dodać 1 do tych koordynatów pierwszych albo znaleźć rozwiązenie w biopythonie
 potestować rozwiązania
 znormalizować nazwy
+
+1. ogarnąć to lepiej pod względem obiektowym
+2. zmienić normalizację
+3. ustawić accesionName jako index

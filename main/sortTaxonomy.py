@@ -48,9 +48,10 @@ class SortTaxonomy():
                         main_result_dict[main_family] = unique_number_of_genes
                         main_df.loc[accession] = [main_family, unique_number_of_genes, number_of_rows]
                         break
+        main_df = main_family.set_index("ACCESSION")
         return main_df
 
-    @timeit
+    # @timeit
     def save_data_frame_to_exl(self, path):
         previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_NAME_PRODUCT")
         previos_gene_df.to_excel(f"{path}/selected_previous_gene_mit.xlsx")

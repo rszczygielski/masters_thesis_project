@@ -13,7 +13,7 @@ class GeneStruct():
 
     @classmethod
     def stripGeneEntries(cls, name, location, product):
-        location = FeatureLocation(location.start + 1, location.end)
+        location = str(FeatureLocation(location.start + 1, location.end))
         caractersToReplace = ["[", "]", "'"]
         for caracter in caractersToReplace:
             location = location.replace(caracter, "")
@@ -30,7 +30,7 @@ class FeatureStruct():
     @staticmethod
     def extractGeneInfoToOneLineStr(gene):
         name = str(gene.type)
-        location = str(gene.location)
+        location = gene.location
         if "product" in gene.qualifiers:
             product = str(gene.qualifiers["product"])
         else:
@@ -75,6 +75,7 @@ class GeneBankReader():
 
     def getSelectedPreviousGene(self, controlRegionLocation, features, previousGeneIndex, controlRegion):
         range_of_locations = range(controlRegionLocation[0], controlRegionLocation[-1]) # getting range values for the given location of CR
+        # print(range_of_locations, "CR")
         originalPreviousGeneIndex = previousGeneIndex
         for number in range(11): # looping through 10 previos genes and comparing locations
             previousGeneIndex = originalPreviousGeneIndex - number #creating new gene index
@@ -86,6 +87,7 @@ class GeneBankReader():
             if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "D-loop":
                     continue # skipping unnecessary genes
             previousGeneLocation = list(map(int, re.findall(r'\d+', str(previousGene.location)))) # getting range values for the given location of gene
+            # print(previousGeneLocation, "previous")
             if len(previousGeneLocation) > 2 :
                 continue # skipping examples with multiple coordinates
             if previousGeneLocation[0] not in range_of_locations and previousGeneLocation[-1] not in range_of_locations:
@@ -133,6 +135,7 @@ class GeneBankReader():
             geneIndex = features.index(gene)
             previousGeneIndex, nextGeneIndex = self.getSurroundingGeneIndexes(geneIndex)
             controlRegionLocation = list(map(int, re.findall(r'\d+', str(gene.location))))
+            controlRegionLocation[0] += 1
             if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
                 if len(controlRegionLocation) > 2:
                     if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop":
@@ -207,55 +210,53 @@ class GeneBankReader():
 
     def getDataFrameOfGenemesWithoutCR(self, geneBankPath):
         geneDict = {"ACCESSION": [], "ORGANISM": [], "TAXONOMY": []}
-        recordCount = 0
+        recordCountWithCR = 0
+        recordCountTotal = 0
+        recordCountNotCR = 0
         with open(geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
-                recordCount += 1
+                recordCountTotal += 1
                 features = record.features
                 hasCR = False
                 for gene in features:
                     # print(gene.type)
                     if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
                         hasCR = True
-                        # print("test")
+                        recordCountWithCR += 1
                         break
                     else:
                         for featureValue in gene.qualifiers.values():
                             if "control region" in featureValue or "D-loop" in featureValue:
                                 hasCR = True
-                                # print("test")
+                                recordCountWithCR += 1
                                 break
                             else:
                                 continue
                 if hasCR:
                     continue
                 else:
-                    # recordCount += 1
+                    recordCountNotCR += 1
                     accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                     geneDict["ACCESSION"].append(accessions)
                     geneDict["ORGANISM"].append(organism)
                     geneDict["TAXONOMY"].append(taxonomy)
-        print(recordCount)
-        return geneDict
+        geneDf = pd.DataFrame.from_dict(geneDict)
+        geneDf = geneDf.set_index("ACCESSION")
+        recordStats = (recordCountTotal, recordCountNotCR, recordCountWithCR)
+        return geneDf, recordStats
 
 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader()
     mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    # mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    # mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
+    mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
 
     # TESTING
-    # test_df = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    # print(test_df)
+    mitochondrion1_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    mitochondrion2_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
 
-    # test_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/sequence_test2.gb")
-    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/test.xlsx", test_df)
-
-    # new_seq_testing = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/new_seq_for_testing.gbff")
-    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/test_seq_results.xlsx", new_seq_testing)
-
-
-    # przypadki gdzie podczas iteracji przechodzę z ostatniego na pierwszy (next) i z pierwszego na ostatni (prevois)
+    mergedDf_no_CR = geneBankReader.mergeTwoDataFrames(mitochondrion1_df_withoutCR[0], mitochondrion2_df_withoutCR[0])
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/no_CR.xlsx", mergedDf_no_CR)
