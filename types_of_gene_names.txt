@@ -1,29 +1,29 @@
-NEXT_GENE_PRODUCT unique_values = ['tRNA-Phe', 'tRNA-Pro', 'tRNA-Thr', 'cytochrome b', 'tRNA-Asp',
-       'NADH dehydrogenase subunit 2', 'tRNA-Leu', 'tRNA-Cys',
-       '12S ribosomal RNA', 'tRNA-Gln', 'NADH dehydrogenase subunit 1',
-       'NADH dehydrogenase subunit 6', 'tRNA-Lys',
-       'cytochrome c oxidase subunit II', 'tRNA-Ile', 's-rRNA',
-       'tRNA-Ala', 'NADH dehydrogenase subunit 5', 'tRNA-Met',
-       '16S ribosomal RNA', 'ATP synthase F0 subunit 6', 'tRNA-Trp',
-       'NADH dehydrogenase subunit 3', 'tRNA-Ser',
-       'cytochrome c oxidase subunit III', 'tRNA-Tyr', 'l-rRNA',
-       'tRNA-Val', 'cytochrome c oxidase subunit I', 'tRNA-Arg',
-       'NADH dehydrogenase subunit 4L', 'tRNA-His',
-       'ATP synthase F0 subunit 8', 'NADH dehydrogenase subunit 4',
-       'tRNA-Asn', 'tRNA-Glu', 'tRNA-Gly']
+NEXT_GENE_PRODUCT unique_values = ['tRNA-Phe', 'tRNA-Met', 'tRNA-Asp', 'tRNA-Leu', nan, 'tRNA-Ile',
+       'NADH dehydrogenase subunit 2', 'tRNA-Asn', 's-rRNA', 'tRNA-Ser',
+       'tRNA-Pro', 'tRNA-Gln', 'tRNA-Cys', 'tRNA-Thr', 'tRNA-Tyr',
+       'NADH dehydrogenase subunit 3', 'cytochrome b',
+       'NADH dehydrogenase subunit 6', 'tRNA-Ala', 'tRNA-Gly', 'tRNA-Trp',
+       'NADH dehydrogenase subunit 5', 'cytochrome c oxidase subunit I',
+       'l-rRNA', 'tRNA-Lys', 'ATP synthase F0 subunit 6',
+       'cytochrome c oxidase subunit III', 'NADH dehydrogenase subunit 1',
+       'ATP synthase F0 subunit 8', 'tRNA-Val',
+       'NADH dehydrogenase subunit 4L', 'tRNA-Glu', 'tRNA-His',
+       'cytochrome c oxidase subunit II', 'tRNA-Arg',
+       'NADH dehydrogenase subunit 4']
 
 
-CONTROL_REGION unique_values = ['D-loop', 'misc_feature', 'rep_origin', 'misc_structure',
-       'stem_loop', 'C_region', 'repeat_region', 'gene']
+CONTROL_REGION unique_values = ['D-loop', 'misc_feature', 'repeat_region', 'stem_loop',
+       'regulatory', 'C_region', 'ncRNA', 'gene', 'rep_origin',
+       'misc_structure']
 
 
- PREVIOUS_GENE_PRODUCT unique_values = ['tRNA-Thr', 'tRNA-Pro', '12S ribosomal RNA',
-       'NADH dehydrogenase subunit 5', 'tRNA-Phe', 'tRNA-Glu', 'tRNA-Ile',
-       'tRNA-His', 'tRNA-Leu', 'cytochrome b', '16S ribosomal RNA',
-       'NADH dehydrogenase subunit 1', 'tRNA-Trp',
-       'NADH dehydrogenase subunit 6', 'tRNA-Asp', 'tRNA-Val', 'tRNA-Gln',
-       'tRNA-Asn', 'ATP synthase F0 subunit 8', 'tRNA-Ser', 'tRNA-Met',
-       'tRNA-Ala', 'l-rRNA', 'tRNA-Gly', 's-rRNA', 'tRNA-Tyr', 'tRNA-Arg',
-       'tRNA-Cys', 'tRNA-Lys', 'cytochrome c oxidase subunit III',
-       'NADH dehydrogenase subunit 4', 'ATP synthase F0 subunit 6',
-       'NADH dehydrogenase subunit 2', 'cytochrome c oxidase subunit I']
+ PREVIOUS_GENE_PRODUCT unique_values = ['tRNA-Pro', 'tRNA-Glu', 's-rRNA', 'tRNA-Asp', 'tRNA-Ile',
+       'tRNA-Thr', nan, 'tRNA-Gly', 'tRNA-Phe', 'tRNA-Asn', 'tRNA-Ser',
+       'tRNA-Gln', 'tRNA-Leu', 'tRNA-Trp', 'l-rRNA', 'tRNA-Ala',
+       'tRNA-Val', 'tRNA-Tyr', 'tRNA-Arg', 'tRNA-Lys', 'cytochrome b',
+       'NADH dehydrogenase subunit 1', 'NADH dehydrogenase subunit 6',
+       'cytochrome c oxidase subunit I', 'tRNA-Cys',
+       'ATP synthase F0 subunit 6', 'tRNA-Met',
+       'NADH dehydrogenase subunit 4L', 'NADH dehydrogenase subunit 5',
+       'tRNA-His', 'cytochrome c oxidase subunit III',
+       'NADH dehydrogenase subunit 4', 'NADH dehydrogenase subunit 2']

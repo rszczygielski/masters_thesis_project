@@ -246,13 +246,18 @@ class GeneBankReader():
         recordStats = (recordCountTotal, recordCountNotCR, recordCountWithCR)
         return geneDf, recordStats
 
+    def normalizeNames(self, data_frame):
+        new_data_frame = data_frame.replace("small subunit ribosomal RNA", "s-rRNA").replace("12S ribosomal RNA", "s-rRNA")
+        new_data_frame = new_data_frame.replace("large subunit ribosomal RNA", "l-rRNA").replace("16S ribosomal RNA", "l-rRNA")
+        return new_data_frame
 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader()
     mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
     mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
     mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/main_mitochondrion.xlsx", mergedDf)
+    mergedDf = geneBankReader.normalizeNames(mergedDf)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx", mergedDf)
 
     # TESTING
     mitochondrion1_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")

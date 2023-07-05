@@ -30,14 +30,20 @@ class SortTaxonomy():
         return full_taxonomy_string.split(", ")
 
     def get_sorted_taxonomy_data_frame(self, column_name):
-        main_result_dict = {}
-        main_df = pd.DataFrame(columns=['TAXONOMY', column_name, "FROM_HOW_MANY_TAXONOMY"], index=["ACCESSION"])
+        temporary_result_dict = {}
+        main_data_dict = {
+            "ACCESSION": [],
+            "TAXONOMY": [],
+            column_name: [],
+            "FROM_HOW_MANY_TAXONOMY": []
+        }
+        # main_df = pd.DataFrame(columns=['TAXONOMY', column_name, "FROM_HOW_MANY_TAXONOMY"], index=["ACCESSION"])
         for accession, row in self.taxonomy_excel.iterrows():
             full_taxonomy_list = self.get_splited_taxonomy_row(row)
             main_family = f"{full_taxonomy_list[0]}"
             for family in full_taxonomy_list[1:]:
                 main_family = self.get_further_taxonomy_family(main_family, family)
-                if main_family in main_result_dict:
+                if main_family in temporary_result_dict:
                     break
                 else:
                     sorted_taxonomy_df = self.taxonomy_excel.where(self.taxonomy_excel["TAXONOMY"]\
@@ -45,21 +51,32 @@ class SortTaxonomy():
                     number_of_rows = sorted_taxonomy_df.shape[0]
                     unique_number_of_genes = sorted_taxonomy_df[column_name].unique()
                     if len(unique_number_of_genes) == 1:
-                        main_result_dict[main_family] = unique_number_of_genes
-                        main_df.loc[accession] = [main_family, unique_number_of_genes, number_of_rows]
+                        temporary_result_dict[main_family] = unique_number_of_genes
+                        if number_of_rows == 1:
+                            main_data_dict["TAXONOMY"].append(row.TAXONOMY)
+                            # main_df.loc[accession] = [row.TAXONOMY, unique_number_of_genes, number_of_rows]
+                        else:
+                            main_data_dict["TAXONOMY"].append(main_family)
+                        main_data_dict["ACCESSION"].append(accession)
+                        main_data_dict[column_name].append(unique_number_of_genes[0])
+                        main_data_dict["FROM_HOW_MANY_TAXONOMY"].append(number_of_rows)
+                            # main_df.loc[accession] = [main_family, unique_number_of_genes, number_of_rows]
                         break
-        main_df = main_family.set_index("ACCESSION")
+        main_df = pd.DataFrame.from_dict(main_data_dict)
+        main_df.set_index("ACCESSION")
         return main_df
 
     # @timeit
     def save_data_frame_to_exl(self, path):
         previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_NAME_PRODUCT")
-        previos_gene_df.to_excel(f"{path}/selected_previous_gene_mit.xlsx")
+        previos_gene_df.to_excel(f"{path}/all_previous_gene_mit.xlsx")
         print(f"\033[92mPrevios Gene saved\033[0m")
         next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE_NAME_PRODUCT")
-        next_gene_df.to_excel(f"{path}/selected_next_gene_mit.xlsx")
+        next_gene_df.to_excel(f"{path}/all_next_gene_mit.xlsx")
         print(f"\033[92mNext Gene saved\033[0m")
 
 if __name__ == "__main__":
     sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx")
-    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/not_selected_mit")
+    # sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/not_selected_mit")
+    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/test")
+

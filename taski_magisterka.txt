@@ -48,3 +48,4 @@ znormalizować nazwy
 1. ogarnąć to lepiej pod względem obiektowym
 2. zmienić normalizację
 3. ustawić accesionName jako index
+4. pełne taksonomie jak mamy przypadek gdzie tylko 1 rekord jest z taką taksonomią
