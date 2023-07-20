@@ -39,7 +39,6 @@ class FeatureStruct():
 
     @classmethod
     def initFromSeqFeatureClass(cls, geneList):
-        # print(geneList)
         mapObject = map(cls.extractGeneInfoToOneLineStr, geneList)
         geneList = list(mapObject)
         previousGene = geneList[0]
@@ -81,10 +80,12 @@ class GeneBankReader():
             previousGeneIndex = originalPreviousGeneIndex - number #creating new gene index
             if previousGeneIndex < 1:
                 previousGeneIndex = len(features) - 1
+                if features[previousGeneIndex].type == "gene":
+                    previousGeneIndex = len(features) - 2
                 previousGene = features[previousGeneIndex]
                 return previousGene # returning gene while crossing borrder line
             previousGene = features[previousGeneIndex]
-            if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "D-loop":
+            if previousGene.type == "source" or previousGene.type == "gene" or previousGene.type == "repeat_region" or previousGene.type == "misc_feature" or previousGene.type == "D-loop":
                     continue # skipping unnecessary genes
             previousGeneLocation = list(map(int, re.findall(r'\d+', str(previousGene.location)))) # getting range values for the given location of gene
             # print(previousGeneLocation, "previous")
@@ -103,10 +104,12 @@ class GeneBankReader():
             nextGeneIndex = originalNextGeneIndex + number
             if nextGeneIndex >= len(features):
                 nextGeneIndex = 1
+                if features[nextGeneIndex].type == "gene":
+                    nextGeneIndex = 2
                 nextGene = features[nextGeneIndex]
                 return nextGene
             nextGene = features[nextGeneIndex]
-            if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "repeat_region" or  nextGene.type == "D-loop":
+            if nextGene.type == "source" or nextGene.type == "gene" or nextGene.type == "misc_feature" or nextGene.type == "repeat_region" or  nextGene.type == "D-loop":
                 continue
             nextGeneLocation = list(map(int, re.findall(r'\d+', str(nextGene.location))))
             if len(nextGeneLocation) > 2 :
@@ -138,9 +141,9 @@ class GeneBankReader():
             controlRegionLocation[0] += 1
             if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
                 if len(controlRegionLocation) > 2:
-                    if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop":
+                    if features[nextGeneIndex].type == "repeat_region" or features[nextGeneIndex].type == "source" or features[nextGeneIndex].type == "D-loop" or features[nextGeneIndex].type == "misc_feature":
                         nextGeneIndex  += 1
-                    if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source" or features[previousGeneIndex].type == "D-loop":
+                    if features[previousGeneIndex].type == "repeat_region" or features[previousGeneIndex].type == "source" or features[previousGeneIndex].type == "D-loop" or features[nextGeneIndex].type == "misc_feature":
                         previousGeneIndex  -= 1
                     nextGene = features[nextGeneIndex]
                     previousGene = features[previousGeneIndex]
