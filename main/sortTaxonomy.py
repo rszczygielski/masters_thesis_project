@@ -3,12 +3,19 @@ from IPython.display import display
 from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
 import pandas as pd
+import logging
+from readGeneBank import Bcolors
 
 class SortTaxonomy():
     def __init__(self, path):
         self.taxonomy_excel = pd.read_excel(path, index_col="ACCESSION")
         self.taxonomy_excel["TAXONOMY"] = self.taxonomy_excel["TAXONOMY"].str.replace("[", "")
         self.taxonomy_excel["TAXONOMY"] = self.taxonomy_excel["TAXONOMY"].str.replace("]", "")
+        self.logger = self._initLogger()
+
+    def _initLogger(self):
+        logging.basicConfig(format="%(asctime)s-%(levelname)s-%(filename)s:%(lineno)d - %(message)s", level=logging.DEBUG)
+        return logging.getLogger(__name__)
 
     def timeit(func):
         def timeit_wrapper(*args, **kwargs):
@@ -16,6 +23,7 @@ class SortTaxonomy():
             result = func(*args, **kwargs)
             end_time = time.perf_counter()
             total_time = end_time - start_time
+            # self.logger.info(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
             print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
             return result
         return timeit_wrapper
@@ -37,7 +45,6 @@ class SortTaxonomy():
             column_name: [],
             "FROM_HOW_MANY_TAXONOMY": []
         }
-        # main_df = pd.DataFrame(columns=['TAXONOMY', column_name, "FROM_HOW_MANY_TAXONOMY"], index=["ACCESSION"])
         for accession, row in self.taxonomy_excel.iterrows():
             full_taxonomy_list = self.get_splited_taxonomy_row(row)
             main_family = f"{full_taxonomy_list[0]}"
@@ -54,29 +61,30 @@ class SortTaxonomy():
                         temporary_result_dict[main_family] = unique_number_of_genes
                         if number_of_rows == 1:
                             main_data_dict["TAXONOMY"].append(row.TAXONOMY)
-                            # main_df.loc[accession] = [row.TAXONOMY, unique_number_of_genes, number_of_rows]
                         else:
                             main_data_dict["TAXONOMY"].append(main_family)
                         main_data_dict["ACCESSION"].append(accession)
                         main_data_dict[column_name].append(unique_number_of_genes[0])
                         main_data_dict["FROM_HOW_MANY_TAXONOMY"].append(number_of_rows)
-                            # main_df.loc[accession] = [main_family, unique_number_of_genes, number_of_rows]
+                        self.logger.info(f"Row added to dictionary{accession}")
                         break
         main_df = pd.DataFrame.from_dict(main_data_dict)
         main_df.set_index("ACCESSION")
+        self.logger.info(Bcolors.OKGREEN.value + f"Data Frame out of {column_name} created" + Bcolors.ENDC.value)
         return main_df
 
-    # @timeit
+    @timeit
     def save_data_frame_to_exl(self, path):
         previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_NAME_PRODUCT")
         previos_gene_df.to_excel(f"{path}/all_previous_gene_mit.xlsx")
-        print(f"\033[92mPrevios Gene saved\033[0m")
+        self.logger.info(Bcolors.OKGREEN.value + "Previos Gene saved" + Bcolors.ENDC.value)
         next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE_NAME_PRODUCT")
         next_gene_df.to_excel(f"{path}/all_next_gene_mit.xlsx")
-        print(f"\033[92mNext Gene saved\033[0m")
+        self.logger.info(Bcolors.OKGREEN.value + "Next Gene saved" + Bcolors.ENDC.value)
+
 
 if __name__ == "__main__":
     sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx")
-    # sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_selected_taxonomy/not_selected_mit")
-    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/test")
+    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results/")
+    # sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/test")
 
