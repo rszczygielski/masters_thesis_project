@@ -25,6 +25,25 @@ class GeneStruct():
         self.product = product
 
     @classmethod
+    def singleInit(cls, gene):
+        name = str(gene.type)
+        location = gene.location
+        if "product" in gene.qualifiers:
+            product = str(gene.qualifiers["product"])
+        else:
+            product = None
+        if location.start + 1 >= location.end:
+            location = str(FeatureLocation(location.start, location.end))
+        else:
+            location = str(FeatureLocation(location.start + 1, location.end))
+        caractersToReplace = ["[", "]", "'"]
+        for caracter in caractersToReplace:
+            location = location.replace(caracter, "")
+            if product:
+                product = product.replace(caracter, "")
+        return cls(name, location, product)
+
+    @classmethod
     def stripGeneEntries(cls, name, location, product):
         if location.start + 1 >= location.end:
             location = str(FeatureLocation(location.start, location.end))

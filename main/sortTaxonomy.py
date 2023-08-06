@@ -4,6 +4,7 @@ from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
 import pandas as pd
 import logging
+import datetime
 from readGeneBank import Bcolors
 
 class SortTaxonomy():
@@ -24,7 +25,7 @@ class SortTaxonomy():
             end_time = time.perf_counter()
             total_time = end_time - start_time
             # self.logger.info(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
-            print(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+            print(f'Function {func.__name__}{args} {kwargs} Took {str(datetime.timedelta(seconds=total_time))} seconds')
             return result
         return timeit_wrapper
 
@@ -43,6 +44,7 @@ class SortTaxonomy():
             "ACCESSION": [],
             "TAXONOMY": [],
             column_name: [],
+            "LOCATION": [],
             "FROM_HOW_MANY_TAXONOMY": []
         }
         for accession, row in self.taxonomy_excel.iterrows():
@@ -63,13 +65,17 @@ class SortTaxonomy():
                             main_data_dict["TAXONOMY"].append(row.TAXONOMY)
                         else:
                             main_data_dict["TAXONOMY"].append(main_family)
+                        if "PREVIOUS" in column_name:
+                            main_data_dict["LOCATION"].append(row.PREVIOUS_GENE_LOCATION)
+                        else:
+                            main_data_dict["LOCATION"].append(row.NEXT_GENE_LOCATION)
                         main_data_dict["ACCESSION"].append(accession)
                         main_data_dict[column_name].append(unique_number_of_genes[0])
                         main_data_dict["FROM_HOW_MANY_TAXONOMY"].append(number_of_rows)
                         self.logger.info(f"Row added to dictionary{accession}")
                         break
         main_df = pd.DataFrame.from_dict(main_data_dict)
-        main_df.set_index("ACCESSION")
+        main_df = main_df.set_index("ACCESSION")
         self.logger.info(Bcolors.OKGREEN.value + f"Data Frame out of {column_name} created" + Bcolors.ENDC.value)
         return main_df
 
