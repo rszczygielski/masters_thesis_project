@@ -43,8 +43,11 @@ class SortTaxonomy():
         main_data_dict = {
             "ACCESSION": [],
             "TAXONOMY": [],
-            column_name: [],
-            "LOCATION": [],
+            "SURROUNDING_PAIRS": [],
+            "PREVIOUS_GENE_PRODUCT_NAME": [],
+            "PREVIOUS_GENE_LOCATION": [],
+            "NEXT_GENE_PRODUCT_NAME": [],
+            "NEXT_GENE_LOCATION": [],
             "FROM_HOW_MANY_TAXONOMY": []
         }
         for accession, row in self.taxonomy_excel.iterrows():
@@ -58,19 +61,19 @@ class SortTaxonomy():
                     sorted_taxonomy_df = self.taxonomy_excel.where(self.taxonomy_excel["TAXONOMY"]\
                                                                 .str.contains(main_family, regex=False)).dropna()
                     number_of_rows = sorted_taxonomy_df.shape[0]
-                    unique_number_of_genes = sorted_taxonomy_df[column_name].unique()
-                    if len(unique_number_of_genes) == 1:
-                        temporary_result_dict[main_family] = unique_number_of_genes
+                    unique_genes = sorted_taxonomy_df[column_name].unique()
+                    if len(unique_genes) == 1:
+                        temporary_result_dict[main_family] = unique_genes
                         if number_of_rows == 1:
                             main_data_dict["TAXONOMY"].append(row.TAXONOMY)
                         else:
                             main_data_dict["TAXONOMY"].append(main_family)
-                        if "PREVIOUS" in column_name:
-                            main_data_dict["LOCATION"].append(row.PREVIOUS_GENE_LOCATION)
-                        else:
-                            main_data_dict["LOCATION"].append(row.NEXT_GENE_LOCATION)
+                        main_data_dict["PREVIOUS_GENE_PRODUCT_NAME"].append(row.PREVIOUS_GENE_PRODUCT_NAME)
+                        main_data_dict["NEXT_GENE_PRODUCT_NAME"].append(row.NEXT_GENE_PRODUCT_NAME)
+                        main_data_dict["NEXT_GENE_LOCATION"].append(row.NEXT_GENE_LOCATION)
+                        main_data_dict["PREVIOUS_GENE_LOCATION"].append(row.PREVIOUS_GENE_LOCATION)
                         main_data_dict["ACCESSION"].append(accession)
-                        main_data_dict[column_name].append(unique_number_of_genes[0])
+                        main_data_dict["SURROUNDING_PAIRS"].append(row.SURROUNDING_PAIRS)
                         main_data_dict["FROM_HOW_MANY_TAXONOMY"].append(number_of_rows)
                         self.logger.info(f"Row added to dictionary{accession}")
                         break
@@ -80,17 +83,24 @@ class SortTaxonomy():
         return main_df
 
     @timeit
-    def save_data_frame_to_exl(self, path):
-        previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_NAME_PRODUCT")
+    def save_data_frame_to_exl_both_genes(self, path):
+        previos_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("PREVIOUS_GENE_PRODUCT_NAME")
         previos_gene_df.to_excel(f"{path}/all_previous_gene_mit.xlsx")
         self.logger.info(Bcolors.OKGREEN.value + "Previos Gene saved" + Bcolors.ENDC.value)
-        next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE_NAME_PRODUCT")
+        next_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("NEXT_GENE_PRODUCT_NAME")
         next_gene_df.to_excel(f"{path}/all_next_gene_mit.xlsx")
         self.logger.info(Bcolors.OKGREEN.value + "Next Gene saved" + Bcolors.ENDC.value)
 
+    @timeit
+    def save_data_frame_to_exl(self, path, file_name):
+        surrounding_pairs_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("SURROUNDING_PAIRS")
+        surrounding_pairs_gene_df.to_excel(f"{path}/{file_name}.xlsx")
+        self.logger.info(Bcolors.OKGREEN.value + "SURROUNDING_PAIRS saved" + Bcolors.ENDC.value)
+
 
 if __name__ == "__main__":
-    sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx")
-    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results/")
+    sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_no_location.xlsx")
+    # sortTaxonomy.save_data_frame_to_exl_both_genes("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results/")
+    sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results_no_location/", "surrounding_pairs_mit_no_location")
     # sortTaxonomy.save_data_frame_to_exl("/home/rszczygielski/bioinf/magisterka/geneBank/test")
 

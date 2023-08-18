@@ -36,7 +36,7 @@ class ControlRegionFinder():
         self.data_frame_dict[file_name] = gene_data_frame
         self.logger.info(Bcolors.OKGREEN.value + f"{file_name} loaded" + Bcolors.ENDC.value)
 
-    def get_joined_data(self, column_for_joining="TAXONOMY"):
+    def join_gene_data(self, column_for_joining="TAXONOMY"):
         df_inner = pd.merge(self.data_frame_dict["all_previous_gene_mit"], self.data_frame_dict["all_next_gene_mit"],
                             on=column_for_joining, how='inner')
         df_inner = df_inner.drop(columns=['NEXT_GENE_NAME_PRODUCT', 'PREVIOUS_GENE_NAME_PRODUCT',
@@ -47,6 +47,9 @@ class ControlRegionFinder():
         df_inner = df_inner.set_index("ACCESSION")
         return df_inner
 
+    def get_df(self, df_name):
+        return self.data_frame_dict[df_name]
+
     def getAnnotations(self, annotations):
         return f"{annotations['accessions'][0]}.{annotations['sequence_version']}",\
             annotations["organism"], str(annotations["taxonomy"])
@@ -54,29 +57,29 @@ class ControlRegionFinder():
     def get_missing_crs(self, features, previous_gene_location, next_gene_location):
         missing_crs_list = []
         previous_gene_location = int(previous_gene_location.split(":")[1])
-        next_gene_location = int(next_gene_location.split(":")[0])
+        print(next_gene_location)
+        next_gene_location = int(next_gene_location.split(":")[0].replace("<", ""))
         for gene in features:
-            if gene.type == "source":
-                continue
+            # if gene.type == "source" or "product" in gene.qualifiers:
+            #     continue
             gene_location = list(map(int, re.findall(r'\d+', str(gene.location))))
             gene_location[0] += 1
             if next_gene_location > previous_gene_location:
                 location_range = range(previous_gene_location, next_gene_location)
                 if gene_location[0] in location_range and gene_location[-1] in location_range:
+                    self.logger.info(f"Border location coordinates {previous_gene_location} <--> {next_gene_location}")
+                    self.logger.info(f"Acctual location {gene_location[0]}:{gene_location[1]} ---- Name {gene.type}, Product {GeneStruct.singleInit(gene).product}")
                     missing_crs_list.append(GeneStruct.singleInit(gene))
-                    print("previous", previous_gene_location, "next", next_gene_location)
-                    print(gene_location[0], gene_location[1], gene.type, GeneStruct.singleInit(gene).product)
             else:
                 if len(gene_location) > 2:
                     continue
                 if gene_location[1] < next_gene_location or gene_location[0] > previous_gene_location:
-                    print("previous", previous_gene_location, "next", next_gene_location)
-                    print(gene_location[0], gene_location[1], gene.type, GeneStruct.singleInit(gene).product)
+                    self.logger.info(f"Border location coordinates {previous_gene_location} <--> {next_gene_location}")
+                    self.logger.info(f"Location {gene_location[0]}:{gene_location[1]} ---- Name: {gene.type}, Product: {GeneStruct.singleInit(gene).product}")
                     missing_crs_list.append(GeneStruct.singleInit(gene))
         return missing_crs_list
 
-    def read_genebank_file(self, geneBankPath):
-        model_df = self.get_joined_data()
+    def find_cr(self, geneBankPath, model_df):
         geneDict = {"ACCESSION": [],
                     "ORGANISM": [],
                     "TAXONOMY": [],
@@ -85,8 +88,6 @@ class ControlRegionFinder():
                     "CONTROL_REGION_LOCATION": []}
         with open(geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
-            # print(self.data_frame_dict["no_CR"]["TAXONOMY"])
-
             for record in record.records:
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
                 if accessions not in list(self.data_frame_dict["no_CR"]["ACCESSION"]):
@@ -97,11 +98,9 @@ class ControlRegionFinder():
                     # print("TEST")
                     previous_gene_location = model_df.where(model_df["TAXONOMY"] == model_taxonomy).dropna().PREVIOUS_GENE_LOCATION.values[0]
                     # print(previous_gene_location)
-                    if len(model_df.where(model_df["TAXONOMY"] == model_taxonomy).dropna().PREVIOUS_GENE_LOCATION.values) > 1:
-                        print("TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+                    # if len(model_df.where(model_df["TAXONOMY"] == model_taxonomy).dropna().PREVIOUS_GENE_LOCATION.values) > 1:
+                    #     print("TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
                     next_gene_location = model_df.where(model_df["TAXONOMY"] == model_taxonomy).dropna().NEXT_GENE_LOCATION.values[0]
-                    if len(model_df.where(model_df["TAXONOMY"] == model_taxonomy).dropna().NEXT_GENE_LOCATION.values) > 1:
-                        print("TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
                     missing_control_region_list = self.get_missing_crs(record.features, previous_gene_location,
                                                                     next_gene_location)
                     for control_region_struct in missing_control_region_list:
@@ -125,19 +124,23 @@ class ControlRegionFinder():
 
 if __name__ == "__main__":
     control_region_finder = ControlRegionFinder()
+    control_region_finder.read_gene_file("/home/rszczygielski/bioinf/magisterka/geneBank/results/no_CR.xlsx")
     control_region_finder.read_gene_file("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results/all_previous_gene_mit.xlsx")
     control_region_finder.read_gene_file("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_results/all_next_gene_mit.xlsx")
-    control_region_finder.read_gene_file("/home/rszczygielski/bioinf/magisterka/geneBank/results/no_CR.xlsx")
+    control_region_finder.read_gene_file("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx")
+    # model_df_joined = control_region_finder.join_gene_data()
+    model_df_no_sort = control_region_finder.get_df("main_mitochondrion")
 
-    # print(control_region_finder.data_frame_list[1])
-    joined_data = control_region_finder.get_joined_data()
-    # print(joined_data.columns)
-    # if "NC_049120.1" in joined_data.index:
-    #     print(joined_data.loc["NC_049120.1"])
-    mit1_df = control_region_finder.read_genebank_file("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
-    mit2_df = control_region_finder.read_genebank_file("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+
+    mit1_df = control_region_finder.find_cr("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", model_df_no_sort)
+    mit2_df = control_region_finder.find_cr("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", model_df_no_sort)
     merged_df = control_region_finder.mergeTwoDataFrames(mit1_df, mit2_df)
-    control_region_finder.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/finded_CR.xlsx", merged_df)
+
+
+    # SAVE
+    control_region_finder.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/find_CR_no_sort.xlsx", merged_df)
+
+    # joined_data = control_region_finder.get_joined_data()
     # print(joined_data)
     # print(joined_data.where(joined_data["ACCESSION_x"] == joined_data["ACCESSION_y"]))
 

@@ -36,7 +36,7 @@ class GeneStruct():
             location = str(FeatureLocation(location.start, location.end))
         else:
             location = str(FeatureLocation(location.start + 1, location.end))
-        caractersToReplace = ["[", "]", "'"]
+        caractersToReplace = ["[", "]", "'", "<"]
         for caracter in caractersToReplace:
             location = location.replace(caracter, "")
             if product:
@@ -219,7 +219,7 @@ class GeneBankReader():
                 return True
         return False
 
-    def getFeatures(self, features):
+    def getFeaturesBasedOnLocation(self, features):
         listOfFeatureStructs = []
         for gene in features:
             geneIndex = features.index(gene)
@@ -245,6 +245,24 @@ class GeneBankReader():
                     self.logger.info(f"Previous - {previousGene.type}; CR - {gene.type}; Next - {nextGene.type} added")
         return listOfFeatureStructs
 
+    def getFeaturesNoLocation(self, features):
+        listOfFeatureStructs = []
+        for gene in features:
+            geneIndex = features.index(gene)
+            previousGeneIndex, nextGeneIndex = self.getSurroundingGeneIndexes(geneIndex)
+            if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
+                previousGene = self.getPreviousNoLocation(previousGeneIndex, features)
+                nextGene = self.getNextGeneNoLocation(nextGeneIndex, features)
+                listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
+                self.logger.info(f"Previous Gene - {previousGene.type}; CR - {gene.type}; Next Gene - {nextGene.type} added")
+            else:
+                if self.ifCrInGeneQualifiers(gene):
+                    previousGene = self.getPreviousNoLocation(previousGeneIndex, features)
+                    nextGene = self.getNextGeneNoLocation(nextGeneIndex, features)
+                    listOfFeatureStructs.append(FeatureStruct.initFromSeqFeatureClass([previousGene, gene, nextGene]))
+                    self.logger.info(f"Previous Gene - {previousGene.type}; CR - {gene.type}; Next Gene - {nextGene.type} added")
+        return listOfFeatureStructs
+
     def extractGeneInfoToOneLineStr(self, gene):
         name = gene.type
         location = gene.location
@@ -254,22 +272,26 @@ class GeneBankReader():
             product = None
         return f"{name} {location} {product}"
 
-    def readGeneBankFile(self, geneBankPath):
+    def getMainDf(self, geneBankPath, locationOption=False):
         geneDict = {"ACCESSION": [],
                         "ORGANISM": [],
                         "TAXONOMY": [],
                         "PREVIOUS_GENE_NAME": [],
                         "PREVIOUS_GENE_LOCATION": [],
-                        "PREVIOUS_GENE_NAME_PRODUCT": [],
+                        "PREVIOUS_GENE_PRODUCT_NAME": [],
                         "CONTROL_REGION_NAME": [],
                         "CONTROL_REGION_LOCATION": [],
                         "NEXT_GENE_NAME": [],
                         "NEXT_GENE_LOCATION": [],
-                        "NEXT_GENE_NAME_PRODUCT": []}
+                        "NEXT_GENE_PRODUCT_NAME": [],
+                        "SURROUNDING_PAIRS": []}
         with open(geneBankPath) as geneBankFile:
             record = SeqIO.parse(geneBankFile, 'genbank')
             for record in record.records:
-                featureStructList = self.getFeatures(record.features)
+                if locationOption:
+                    featureStructList = self.getFeaturesBasedOnLocation(record.features)
+                else:
+                    featureStructList = self.getFeaturesNoLocation(record.features)
                 if len(featureStructList) == 0:
                     continue
                 accessions, organism, taxonomy = self.getAnnotations(record.annotations)
@@ -279,12 +301,13 @@ class GeneBankReader():
                     geneDict["TAXONOMY"].append(taxonomy)
                     geneDict["PREVIOUS_GENE_NAME"].append(featureStruct.previousGene.name)
                     geneDict["PREVIOUS_GENE_LOCATION"].append(featureStruct.previousGene.location)
-                    geneDict["PREVIOUS_GENE_NAME_PRODUCT"].append(featureStruct.previousGene.product)
+                    geneDict["PREVIOUS_GENE_PRODUCT_NAME"].append(featureStruct.previousGene.product)
                     geneDict["CONTROL_REGION_NAME"].append(featureStruct.controlRegion.name)
                     geneDict["CONTROL_REGION_LOCATION"].append(featureStruct.controlRegion.location)
                     geneDict["NEXT_GENE_NAME"].append(featureStruct.nextGene.name)
                     geneDict["NEXT_GENE_LOCATION"].append(featureStruct.nextGene.location)
-                    geneDict["NEXT_GENE_NAME_PRODUCT"].append(featureStruct.nextGene.product)
+                    geneDict["NEXT_GENE_PRODUCT_NAME"].append(featureStruct.nextGene.product)
+                    geneDict["SURROUNDING_PAIRS"].append(f"{featureStruct.previousGene.product}_{featureStruct.nextGene.product}")
         geneDf = pd.DataFrame.from_dict(geneDict)
         geneDf = geneDf.set_index("ACCESSION")
         self.logger.info(Bcolors.OKGREEN.value + f"Data Frame out of {geneBankPath.split(r'/')[-1]} created" + Bcolors.ENDC.value)
@@ -345,20 +368,29 @@ class GeneBankReader():
 
 if __name__ == "__main__":
     geneBankReader = GeneBankReader()
-    mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    mitochondrion2_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    # NO LOCATION
+    # mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=False)
+    # mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=False)
+    # mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
+    # mergedDf = geneBankReader.normalizeNames(mergedDf)
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_no_location.xlsx", mergedDf)
+
+    # BASED ON LOCATION
+    mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=True)
+    mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=True)
     mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
     mergedDf = geneBankReader.normalizeNames(mergedDf)
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion.xlsx", mergedDf)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_based_on_location.xlsx", mergedDf)
 
-    mitochondrion1_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
-    mitochondrion2_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
+    # NO CONTROL REGION
+    # mitochondrion1_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
+    # mitochondrion2_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff")
 
-    print(mitochondrion1_df_withoutCR[1], "mit1 stats")
-    print(mitochondrion2_df_withoutCR[1], "mit2 stats")
-    mergedDf_no_CR = geneBankReader.mergeTwoDataFrames(mitochondrion1_df_withoutCR[0], mitochondrion2_df_withoutCR[0])
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/no_CR.xlsx", mergedDf_no_CR)
+    # print(mitochondrion1_df_withoutCR[1], "mit1 stats")
+    # print(mitochondrion2_df_withoutCR[1], "mit2 stats")
+    # mergedDf_no_CR = geneBankReader.mergeTwoDataFrames(mitochondrion1_df_withoutCR[0], mitochondrion2_df_withoutCR[0])
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/no_CR.xlsx", mergedDf_no_CR)
 
     # TESTING
-    # mitochondrion1_df = geneBankReader.readGeneBankFile("/home/rszczygielski/bioinf/magisterka/geneBank/test/new_seq_for_testing.gbff")
+    # mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/test/new_seq_for_testing.gbff")
     # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/TEST_seq.xlsx", mitochondrion1_df)
