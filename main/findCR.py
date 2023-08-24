@@ -144,5 +144,5 @@ if __name__ == "__main__":
     # print(joined_data)
     # print(joined_data.where(joined_data["ACCESSION_x"] == joined_data["ACCESSION_y"]))
 
-
+# wywalić Eucariota i metazoa
 
