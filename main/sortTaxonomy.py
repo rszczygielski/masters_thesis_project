@@ -48,6 +48,7 @@ class SortTaxonomy():
             "PREVIOUS_GENE_LOCATION": [],
             "NEXT_GENE_PRODUCT_NAME": [],
             "NEXT_GENE_LOCATION": [],
+            "CONTROL_REGION_LOCATION": [],
             "FROM_HOW_MANY_TAXONOMY": []
         }
         for accession, row in self.taxonomy_excel.iterrows():
@@ -65,15 +66,16 @@ class SortTaxonomy():
                     if len(unique_genes) == 1:
                         temporary_result_dict[main_family] = unique_genes
                         if number_of_rows == 1:
-                            main_data_dict["TAXONOMY"].append(row.TAXONOMY)
+                            main_data_dict["TAXONOMY"].append(row.TAXONOMY.replace("'Eukaryota', 'Metazoa', ", "["))
                         else:
-                            main_data_dict["TAXONOMY"].append(main_family)
+                            main_data_dict["TAXONOMY"].append(main_family.replace("'Eukaryota', 'Metazoa', ", "["))
                         main_data_dict["PREVIOUS_GENE_PRODUCT_NAME"].append(row.PREVIOUS_GENE_PRODUCT_NAME)
                         main_data_dict["NEXT_GENE_PRODUCT_NAME"].append(row.NEXT_GENE_PRODUCT_NAME)
                         main_data_dict["NEXT_GENE_LOCATION"].append(row.NEXT_GENE_LOCATION)
                         main_data_dict["PREVIOUS_GENE_LOCATION"].append(row.PREVIOUS_GENE_LOCATION)
                         main_data_dict["ACCESSION"].append(accession)
                         main_data_dict["SURROUNDING_PAIRS"].append(row.SURROUNDING_PAIRS)
+                        main_data_dict["CONTROL_REGION_LOCATION"].append(row.CONTROL_REGION_LOCATION)
                         main_data_dict["FROM_HOW_MANY_TAXONOMY"].append(number_of_rows)
                         self.logger.info(f"Row added to dictionary{accession}")
                         break
@@ -96,7 +98,6 @@ class SortTaxonomy():
         surrounding_pairs_gene_df = sortTaxonomy.get_sorted_taxonomy_data_frame("SURROUNDING_PAIRS")
         surrounding_pairs_gene_df.to_excel(f"{path}/{file_name}.xlsx")
         self.logger.info(Bcolors.OKGREEN.value + "SURROUNDING_PAIRS saved" + Bcolors.ENDC.value)
-
 
 if __name__ == "__main__":
     sortTaxonomy = SortTaxonomy(f"/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_no_location.xlsx")

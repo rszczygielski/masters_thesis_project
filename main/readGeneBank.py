@@ -38,20 +38,21 @@ class GeneStruct():
             location = str(FeatureLocation(location.start + 1, location.end))
         caractersToReplace = ["[", "]", "'", "<"]
         for caracter in caractersToReplace:
-            location = location.replace(caracter, "")
+            # location = location.replace(caracter, "")
             if product:
                 product = product.replace(caracter, "")
         return cls(name, location, product)
 
     @classmethod
     def stripGeneEntries(cls, name, location, product):
+        print(location, location.strand)
         if location.start + 1 >= location.end:
-            location = str(FeatureLocation(location.start, location.end))
+            location = str(FeatureLocation(location.start, location.end, strand=location.strand))
         else:
-            location = str(FeatureLocation(location.start + 1, location.end))
+            location = str(FeatureLocation(location.start + 1, location.end, strand=location.strand))
         caractersToReplace = ["[", "]", "'"]
         for caracter in caractersToReplace:
-            location = location.replace(caracter, "")
+            # location = location.replace(caracter, "")
             if product:
                 product = product.replace(caracter, "")
         return cls(name, location, product)
@@ -249,6 +250,7 @@ class GeneBankReader():
         listOfFeatureStructs = []
         for gene in features:
             geneIndex = features.index(gene)
+            # print(gene.location)
             previousGeneIndex, nextGeneIndex = self.getSurroundingGeneIndexes(geneIndex)
             if "control region" in gene.type or "D-loop" in gene.type or "C_region" in gene.type:
                 previousGene = self.getPreviousNoLocation(previousGeneIndex, features)
@@ -369,18 +371,18 @@ class GeneBankReader():
 if __name__ == "__main__":
     geneBankReader = GeneBankReader()
     # NO LOCATION
-    # mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=False)
-    # mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=False)
-    # mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
-    # mergedDf = geneBankReader.normalizeNames(mergedDf)
-    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_no_location.xlsx", mergedDf)
-
-    # BASED ON LOCATION
-    mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=True)
-    mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=True)
+    mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=False)
+    mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=False)
     mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
     mergedDf = geneBankReader.normalizeNames(mergedDf)
-    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_based_on_location.xlsx", mergedDf)
+    geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_no_location.xlsx", mergedDf)
+
+    # BASED ON LOCATION
+    # mitochondrion1_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff", locationOption=True)
+    # mitochondrion2_df = geneBankReader.getMainDf("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.2.genomic.gbff", locationOption=True)
+    # mergedDf = geneBankReader.mergeTwoDataFrames(mitochondrion1_df, mitochondrion2_df)
+    # mergedDf = geneBankReader.normalizeNames(mergedDf)
+    # geneBankReader.saveDataFrameToFile("/home/rszczygielski/bioinf/magisterka/geneBank/results/main_mitochondrion_based_on_location.xlsx", mergedDf)
 
     # NO CONTROL REGION
     # mitochondrion1_df_withoutCR = geneBankReader.getDataFrameOfGenemesWithoutCR("/home/rszczygielski/bioinf/magisterka/geneBank/mitochondrion.1.genomic.gbff")
